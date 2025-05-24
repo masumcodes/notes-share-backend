@@ -36,7 +36,13 @@ const user = new mongoose.Schema(
         default: [], // Array of notes the user has purchased
       },
     ],
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
   },
+
   { timestamps: true }
 );
 module.exports = mongoose.model("user", user);

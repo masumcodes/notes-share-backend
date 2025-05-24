@@ -6,19 +6,18 @@ const { authenticateToken } = require("./userAuth.js");
 const multer = require("multer");
 const path = require("path");
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads"); // Save files to the uploads directory
+    cb(null, "public/uploads");
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName); // Save the file with a unique name
+    cb(null, uniqueName);
   },
 });
 
 const upload = multer({ storage });
-// Sign Up
+
 router.post("/sign-up", async (req, res) => {
   try {
     const { username, email, password, address } = req.body;
@@ -28,34 +27,32 @@ router.post("/sign-up", async (req, res) => {
         .json({ message: "Username length should be greater than 4" });
     }
 
-    // Check if the username already exists
     const existingUsername = await User.findOne({ username });
+
     if (existingUsername) {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    // Check if the email already exists
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // Check password length
     if (password.length <= 5) {
       return res
         .status(400)
         .json({ message: "Password should be greater than 5 characters" });
     }
 
-    // Hash the password
     const hashPass = await bcrypt.hash(password, 10);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000); // Generate a random 6-digit verification code
 
-    // Create a new user
     const newUser = new User({
       username,
       email,
       password: hashPass,
       address,
+      verificationCode,
     });
 
     await newUser.save();
@@ -67,7 +64,6 @@ router.post("/sign-up", async (req, res) => {
   }
 });
 
-// Sign In
 router.post("/sign-in", async (req, res) => {
   try {
     const { identifier, password } = req.body;
@@ -79,13 +75,11 @@ router.post("/sign-in", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Compare passwords
     const isMatch = await bcrypt.compare(password, existingUser.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate a token
     const authClaims = {
       id: existingUser._id,
       name: existingUser.username,
